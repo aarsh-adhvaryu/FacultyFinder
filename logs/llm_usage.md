@@ -1,5 +1,5 @@
 <h2>1."I am working on the 'FacultyFinder' project. Below is the project specification document.
-<p>OUTPUT:My Role: I am the Lead Data Engineer.Your Role: You are my coding assistant.
+My Role: I am the Lead Data Engineer.Your Role: You are my coding assistant.
 Current Context:
 I have analyzed the requirements and decided on the following architecture:
 
@@ -8,7 +8,7 @@ Storage: I will use SQLite with a normalized schema (separating Faculty info fro
 Serving: I will use FastAPI for the delivery layer.
 Please read the document below, acknowledge the constraints (specifically regarding robots.txt and the sqlite3 requirement), and wait for my specific instruction on the first module. Do not generate full code yet."</h2>
 
-Understood. I have reviewed the "FacultyFinder" project specifications  and your architectural decisions. I am ready to assist you as your coding partner.
+<p>OUTPUT:Understood. I have reviewed the "FacultyFinder" project specifications  and your architectural decisions. I am ready to assist you as your coding partner.
 Here is a summary of the context and constraints we are working with:
 1. Architecture & Tools
 Ingestion: We will use Scrapy to handle the crawling. This is a robust choice for handling the pagination  and multiple targets more efficiently than the suggested requests/BeautifulSoup combo.
@@ -52,7 +52,7 @@ Please use the sqlite3 library and ensure the script creates the folders if they
 
 <p>OUTPUT:Here is the Python script src/database.py to initialize your storage layer.
 This script adheres to your "Storage" requirements and implements the relational structure (Faculty and Research_Tags) outlined in the project recommendations. It uses sqlite3 to ensure data persistence  and includes the necessary directory management to prevent errors during the setup phase.</p>
-<p>
+<p>OUTPUT:
 import sqlite3
 import os
 
