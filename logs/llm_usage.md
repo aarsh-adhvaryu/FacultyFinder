@@ -20,7 +20,8 @@ Robots.txt: Since we are using Scrapy, we will ensure our settings respect the t
 Data Persistence: The pipeline must result in a clean, queryable SQLite database that survives the script execution.
 LLM Policy: I acknowledge that our interactions—prompts and responses—must be logged in logs/llm_usage.md.
 I am ready for your instructions regarding the first module (Ingestion/Scrapy). How would you like to proceed?</p>
-
+<br>
+<br>
 
 <h3>2."Let's start with the Storage Layer.
 I have designed the relational schema to comply with the project's requirement for a clean separation between faculty entities and their search tags.Please write a Python script (save it as src/database.py) that initializes a SQLite database at data/faculty.db.
@@ -125,9 +126,8 @@ def init_db():
 if __name__ == "__main__":
     init_db()
 </p>
-
-
-
+<br>
+<br>
 <h3>3. "Moving on to the Ingestion Layer.
 
 I have defined the Scrapy Item schema in items.py as follows:
@@ -293,6 +293,8 @@ class FacultySpider(scrapy.Spider):
 
         yield item
 </p>
+<br>
+<br>
 
 <h3>4. "I have finished the ingestion layer. Now moving to Transformation & Loading (ETL).
 I have already performed the data cleaning analysis in a Jupyter Notebook (notebooks/Data_cleaning.ipynb) which exports a clean file named cleaned_faculty_data.csv.
@@ -427,7 +429,8 @@ def migrate_data():
 if __name__ == "__main__":
     migrate_data()
 </p>
-
+<br>
+<br>
 <h3>5. "Final step: The Serving Layer.
 I need to expose the faculty.db data via a REST API using FastAPI.
 Task: Write the API code (api/main.py) with the following specifications:
