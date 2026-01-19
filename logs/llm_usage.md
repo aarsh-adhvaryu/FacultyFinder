@@ -1,12 +1,12 @@
-<h3>1."I am working on the 'FacultyFinder' project. Below is the project specification document.
-<p>My Role: I am the Lead Data Engineer.Your Role: You are my coding assistant.
+<h2>1."I am working on the 'FacultyFinder' project. Below is the project specification document.
+<p>OUTPUT:My Role: I am the Lead Data Engineer.Your Role: You are my coding assistant.
 Current Context:
 I have analyzed the requirements and decided on the following architecture:
 
 Ingestion: I will use Scrapy (not BeautifulSoup) to handle the pagination and multiple URL targets efficiently.
 Storage: I will use SQLite with a normalized schema (separating Faculty info from Research Tags).
 Serving: I will use FastAPI for the delivery layer.
-Please read the document below, acknowledge the constraints (specifically regarding robots.txt and the sqlite3 requirement), and wait for my specific instruction on the first module. Do not generate full code yet."</h3>
+Please read the document below, acknowledge the constraints (specifically regarding robots.txt and the sqlite3 requirement), and wait for my specific instruction on the first module. Do not generate full code yet."</h2>
 
 Understood. I have reviewed the "FacultyFinder" project specifications  and your architectural decisions. I am ready to assist you as your coding partner.
 Here is a summary of the context and constraints we are working with:
@@ -23,7 +23,7 @@ I am ready for your instructions regarding the first module (Ingestion/Scrapy). 
 <br>
 <br>
 
-<h3>2."Let's start with the Storage Layer.
+<h2>2."Let's start with the Storage Layer.
 I have designed the relational schema to comply with the project's requirement for a clean separation between faculty entities and their search tags.Please write a Python script (save it as src/database.py) that initializes a SQLite database at data/faculty.db.
 
 Schema Requirements:
@@ -48,9 +48,9 @@ id (Primary Key)
 faculty_id (Foreign Key linked to faculty.id, with Cascade Delete)
 tag (The individual specialization keyword)
 
-Please use the sqlite3 library and ensure the script creates the folders if they don't exist."</h3>
+Please use the sqlite3 library and ensure the script creates the folders if they don't exist."</h2>
 
-<p>Here is the Python script src/database.py to initialize your storage layer.
+<p>OUTPUT:Here is the Python script src/database.py to initialize your storage layer.
 This script adheres to your "Storage" requirements and implements the relational structure (Faculty and Research_Tags) outlined in the project recommendations. It uses sqlite3 to ensure data persistence  and includes the necessary directory management to prevent errors during the setup phase.</p>
 <p>
 import sqlite3
@@ -128,7 +128,7 @@ if __name__ == "__main__":
 </p>
 <br>
 <br>
-<h3>3. "Moving on to the Ingestion Layer.
+<h2>3. "Moving on to the Ingestion Layer.
 
 I have defined the Scrapy Item schema in items.py as follows:
 
@@ -164,15 +164,15 @@ URLs: It must loop through these 5 endpoints and tag the Type accordingly:
 
 Selector Logic:
   * The main container for a faculty card is `div.facultyDetails`.
-  * **Scenario A:** If a link to a full profile exists (`h3 a::attr(href)`), follow it and scrape the full details.
+  * **Scenario A:** If a link to a full profile exists (`h2 a::attr(href)`), follow it and scrape the full details.
   * **Scenario B (Fallback):** If no link exists (common for Visiting Faculty), scrape whatever is available on the card itself and mark other fields as "N/A".
 
 Cleaning:
   * Implement a helper function `clean_html` using `w3lib.html.remove_tags` to strip HTML and normalize whitespace.
-  * Handle the `Specializations` field carefully: if it's missing on the detailage, try to grab it from the list view (the fallback)."</h3>
+  * Handle the `Specializations` field carefully: if it's missing on the detailage, try to grab it from the list view (the fallback)."</h2>
 
 
-<p>
+<p>OUTPUT:
   Here is the spiders/faculty_spider.py code.
 
 This spider implements the "Ingestion" logic  using Scrapy as requested. It handles the pagination/multiple targets by defining start_requests for the 5 different faculty categories and tagging them accordingly. It also includes the clean_html helper function for the "Transformation" step  and implements the fallback logic for faculty members without full profile pages.
@@ -217,7 +217,7 @@ class FacultySpider(scrapy.Spider):
             item = FacultyItem()
             
             # Basic Extraction from Card
-            item['Name'] = self.clean_html(card.css('h3 a::text').get() or card.css('h3::text').get())
+            item['Name'] = self.clean_html(card.css('h2 a::text').get() or card.css('h2::text').get())
             item['Type'] = faculty_type
             item['University'] = "DA-IICT"
             
@@ -232,7 +232,7 @@ class FacultySpider(scrapy.Spider):
             item['Specializations'] = self.clean_html(raw_specialization)
 
             # Check for Profile Link (Scenario A vs B)
-            profile_link = card.css('h3 a::attr(href)').get()
+            profile_link = card.css('h2 a::attr(href)').get()
 
             if profile_link:
                 # Scenario A: Follow the link
@@ -259,7 +259,7 @@ class FacultySpider(scrapy.Spider):
         item = response.meta['item']
         
         # Helper to extract sections based on headers
-        # Note: Selectors here assume standard DA-IICT profile structure (divs with specific classes or h2/h3 headers)
+        # Note: Selectors here assume standard DA-IICT profile structure (divs with specific classes or h2/h2 headers)
         
         # Extract Bio
         # Example: div with class 'biography' or similar
@@ -295,7 +295,7 @@ class FacultySpider(scrapy.Spider):
 <br>
 <br>
 
-<h3>4. "I have finished the ingestion layer. Now moving to Transformation & Loading (ETL).
+<h2>4. "I have finished the ingestion layer. Now moving to Transformation & Loading (ETL).
 I have already performed the data cleaning analysis in a Jupyter Notebook (notebooks/Data_cleaning.ipynb) which exports a clean file named cleaned_faculty_data.csv.
 Task: Please write the migration script (src/migrate.py) to load this clean CSV into our SQLite database.
 
@@ -307,9 +307,9 @@ Column Mapping:
 Map the CSV column Teaching_Clean to the DB column teaching.
 Map Biography_Clean to biography, etc.
 
-Tag Splitting: The Specializations column in the CSV is a comma-separated string. You must split this string in Python and insert multiple rows into the research_tags table for each faculty member."</h3>
+Tag Splitting: The Specializations column in the CSV is a comma-separated string. You must split this string in Python and insert multiple rows into the research_tags table for each faculty member."</h2>
 
-<p>
+<p>OUTPUT:
 Here is the src/migrate.py script.
 
 This script manages the ETL (Extract, Transform, Load) "Loading" phase. It clears the existing data to prevent duplication, reads the cleaned CSV using pandas (as suggested in the transformation specs ), and handles the one-to-many relationship logic by splitting the Specializations string into individual rows for the research_tags table.
@@ -429,7 +429,7 @@ if __name__ == "__main__":
 </p>
 <br>
 <br>
-<h3>5. "Final step: The Serving Layer.
+<h2>5. "Final step: The Serving Layer.
 I need to expose the faculty.db data via a REST API using FastAPI.
 Task: Write the API code (api/main.py) with the following specifications:
 
@@ -437,10 +437,10 @@ Task: Write the API code (api/main.py) with the following specifications:
 2. Endpoints:
 GET /faculty/all: Returns the full list of faculty.
 GET /faculty/search: Accepts a name query parameter (e.g., ?name=Gupta) and performs a SQL LIKE search to return matching profiles.
-3. SQL Logic: Use a helper function to fetch the research_tags for each faculty ID and inject them into the final JSON response.</h3>
+3. SQL Logic: Use a helper function to fetch the research_tags for each faculty ID and inject them into the final JSON response.</h2>
 
 
-<p>
+<p>OUTPUT:
 Here is the api/main.py code.
 This script implements the Serving Layer using FastAPI. It includes the Pydantic data model validation, the specific endpoints requested (/all and /search), and the SQL logic to merge the relational data (Faculty + Tags) into a single JSON response for the Data Scientist.
 
