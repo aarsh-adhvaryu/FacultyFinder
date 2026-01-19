@@ -179,8 +179,7 @@ This spider implements the "Ingestion" logic  using Scrapy as requested. It hand
 
 import scrapy
 from w3lib.html import remove_tags
-# Note: Ensure you have 'from ..items import FacultyItem' if running inside the project structure
-# For this script context, I assume FacultyItem is available in the scope or imported correctly.
+
 from ..items import FacultyItem 
 
 class FacultySpider(scrapy.Spider):
@@ -320,11 +319,10 @@ import pandas as pd
 import os
 import sys
 
-# Ensure we can import from the same directory
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from database import init_db
 
-# Configuration
+
 DB_PATH = os.path.join("data", "faculty.db")
 CSV_PATH = "cleaned_faculty_data.csv" # Assumes file is in project root
 
@@ -454,11 +452,11 @@ import os
 
 app = FastAPI(title="FacultyFinder API")
 
-# Configuration: Locate the DB relative to this file
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "data", "faculty.db")
 
-# --- 1. Data Model (Pydantic) ---
+
 class FacultyResponse(BaseModel):
     id: int
     name: str
@@ -477,7 +475,7 @@ class FacultyResponse(BaseModel):
     # aggregated list from the research_tags table
     research_interests: List[str] = []
 
-# --- 2. Database Helpers ---
+
 def get_db_connection():
     """Establishes a connection to the SQLite database."""
     try:
@@ -520,7 +518,7 @@ def map_row_to_model(cursor, row) -> FacultyResponse:
         research_interests=tags
     )
 
-# --- 3. Endpoints ---
+
 
 @app.get("/faculty/all", response_model=List[FacultyResponse])
 def get_all_faculty():
