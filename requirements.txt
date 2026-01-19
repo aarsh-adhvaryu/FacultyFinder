@@ -1,0 +1,9 @@
+scrapy
+pandas
+fastapi
+uvicorn
+pydantic
+w3lib
+jupyter
+numpy
+requests

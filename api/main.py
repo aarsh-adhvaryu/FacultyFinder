@@ -1,13 +1,16 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Path
 import sqlite3
 from pydantic import BaseModel
 from typing import List, Optional
 
+# --- Configuration ---
+# Update this path if your folder structure is different
 DB_PATH = r"D:\faculty_finder\data\faculty.db"
 
 app = FastAPI(title="FacultyFinder API")
 
 
+# --- Data Models ---
 class FacultyResponse(BaseModel):
     id: int
     name: str
@@ -19,7 +22,7 @@ class FacultyResponse(BaseModel):
     hyperlink: Optional[str]
     profile_url: Optional[str]
     education: Optional[str]
-    teaching: Optional[str]  # NEW FIELD ADDED
+    teaching: Optional[str]
     biography: Optional[str]
     publications: Optional[str]
     research: Optional[str]
@@ -29,6 +32,7 @@ class FacultyResponse(BaseModel):
         from_attributes = True
 
 
+# --- Database Helpers ---
 def get_db_connection():
     try:
         conn = sqlite3.connect(DB_PATH)
@@ -39,6 +43,7 @@ def get_db_connection():
 
 
 def format_faculty(row, cursor):
+    """Helper to format a single DB row into the response dict"""
     cursor.execute("SELECT tag FROM research_tags WHERE faculty_id = ?", (row["id"],))
     tags = [t["tag"] for t in cursor.fetchall()]
 
@@ -53,12 +58,15 @@ def format_faculty(row, cursor):
         "hyperlink": row["hyperlink"],
         "profile_url": row["profile_url"],
         "education": row["education"],
-        "teaching": row["teaching"],  # NEW FIELD MAPPED
+        "teaching": row["teaching"],
         "biography": row["biography"],
         "publications": row["publications"],
         "research": row["research_raw"],
         "research_interests": tags,
     }
+
+
+# --- Endpoints ---
 
 
 @app.get("/faculty/all", response_model=List[FacultyResponse])
@@ -79,3 +87,26 @@ def search_faculty(name: str = Query(..., description="Name to search")):
     results = [format_faculty(row, cursor) for row in cursor.fetchall()]
     conn.close()
     return results
+
+
+# --- NEW ENDPOINT HERE ---
+@app.get("/faculty/{faculty_id}", response_model=FacultyResponse)
+def get_faculty_by_id(
+    faculty_id: int = Path(..., description="The ID of the faculty member")
+):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Fetch specific row by ID
+    cursor.execute("SELECT * FROM faculty WHERE id = ?", (faculty_id,))
+    row = cursor.fetchone()
+
+    if row is None:
+        conn.close()
+        raise HTTPException(
+            status_code=404, detail=f"Faculty with ID {faculty_id} not found"
+        )
+
+    result = format_faculty(row, cursor)
+    conn.close()
+    return result
