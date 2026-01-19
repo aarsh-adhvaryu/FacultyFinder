@@ -1,5 +1,5 @@
 <h3>1."I am working on the 'FacultyFinder' project. Below is the project specification document.
-My Role: I am the Lead Data Engineer.Your Role: You are my coding assistant.
+<p>My Role: I am the Lead Data Engineer.Your Role: You are my coding assistant.
 Current Context:
 I have analyzed the requirements and decided on the following architecture:
 
@@ -19,7 +19,7 @@ Serving: We will use FastAPI to create the endpoint (/faculty/{id} or /all) for 
 Robots.txt: Since we are using Scrapy, we will ensure our settings respect the target site's robots.txt file to maintain ethical scraping standards and avoid IP bans. This aligns with the "Code Quality" requirement for robust error handling.
 Data Persistence: The pipeline must result in a clean, queryable SQLite database that survives the script execution.
 LLM Policy: I acknowledge that our interactions—prompts and responses—must be logged in logs/llm_usage.md.
-I am ready for your instructions regarding the first module (Ingestion/Scrapy). How would you like to proceed?
+I am ready for your instructions regarding the first module (Ingestion/Scrapy). How would you like to proceed?</p>
 
 
 <h3>2."Let's start with the Storage Layer.
@@ -49,13 +49,13 @@ tag (The individual specialization keyword)
 
 Please use the sqlite3 library and ensure the script creates the folders if they don't exist."</h3>
 
-Here is the Python script src/database.py to initialize your storage layer.
-This script adheres to your "Storage" requirements and implements the relational structure (Faculty and Research_Tags) outlined in the project recommendations. It uses sqlite3 to ensure data persistence  and includes the necessary directory management to prevent errors during the setup phase.
-
+<p>Here is the Python script src/database.py to initialize your storage layer.
+This script adheres to your "Storage" requirements and implements the relational structure (Faculty and Research_Tags) outlined in the project recommendations. It uses sqlite3 to ensure data persistence  and includes the necessary directory management to prevent errors during the setup phase.</p>
+<p>
 import sqlite3
 import os
 
-# Configuration
+
 DB_FOLDER = "data"
 DB_NAME = "faculty.db"
 DB_PATH = os.path.join(DB_FOLDER, DB_NAME)
@@ -124,7 +124,7 @@ def init_db():
 
 if __name__ == "__main__":
     init_db()
-
+</p>
 
 
 
@@ -172,6 +172,7 @@ Cleaning:
   * Handle the `Specializations` field carefully: if it's missing on the detailage, try to grab it from the list view (the fallback)."</h3>
 
 
+<p>
   Here is the spiders/faculty_spider.py code.
 
 This spider implements the "Ingestion" logic  using Scrapy as requested. It handles the pagination/multiple targets by defining start_requests for the 5 different faculty categories and tagging them accordingly. It also includes the clean_html helper function for the "Transformation" step  and implements the fallback logic for faculty members without full profile pages.
@@ -291,7 +292,7 @@ class FacultySpider(scrapy.Spider):
         item['Hyperlink'] = response.css('div.field-name-field-website a::attr(href)').get() or "N/A"
 
         yield item
-
+</p>
 
 <h3>4. "I have finished the ingestion layer. Now moving to Transformation & Loading (ETL).
 I have already performed the data cleaning analysis in a Jupyter Notebook (notebooks/Data_cleaning.ipynb) which exports a clean file named cleaned_faculty_data.csv.
@@ -307,6 +308,7 @@ Map Biography_Clean to biography, etc.
 
 Tag Splitting: The Specializations column in the CSV is a comma-separated string. You must split this string in Python and insert multiple rows into the research_tags table for each faculty member."</h3>
 
+<p>
 Here is the src/migrate.py script.
 
 This script manages the ETL (Extract, Transform, Load) "Loading" phase. It clears the existing data to prevent duplication, reads the cleaned CSV using pandas (as suggested in the transformation specs ), and handles the one-to-many relationship logic by splitting the Specializations string into individual rows for the research_tags table.
@@ -424,7 +426,7 @@ def migrate_data():
 
 if __name__ == "__main__":
     migrate_data()
-
+</p>
 
 <h3>5. "Final step: The Serving Layer.
 I need to expose the faculty.db data via a REST API using FastAPI.
@@ -437,7 +439,7 @@ GET /faculty/search: Accepts a name query parameter (e.g., ?name=Gupta) and perf
 3. SQL Logic: Use a helper function to fetch the research_tags for each faculty ID and inject them into the final JSON response.</h3>
 
 
-
+<p>
 Here is the api/main.py code.
 This script implements the Serving Layer using FastAPI. It includes the Pydantic data model validation, the specific endpoints requested (/all and /search), and the SQL logic to merge the relational data (Faculty + Tags) into a single JSON response for the Data Scientist.
 
@@ -563,4 +565,4 @@ Your Data Engineering Pipeline is now complete. You have:
 
 Ingestion: A Scrapy spider (spiders/faculty_spider.py) to crawl and extract data.
 Storage: A schema script (src/database.py) and a migration script (src/migrate.py) to manage the SQLite database.
-Serving: A FastAPI app (api/main.py) to expose the data.
+Serving: A FastAPI app (api/main.py) to expose the data.</p>
