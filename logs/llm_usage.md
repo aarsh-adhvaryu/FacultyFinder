@@ -1,4 +1,4 @@
-<h6>1."I am working on the 'FacultyFinder' project. Below is the project specification document.
+<h3>1."I am working on the 'FacultyFinder' project. Below is the project specification document.
 My Role: I am the Lead Data Engineer.Your Role: You are my coding assistant.
 Current Context:
 I have analyzed the requirements and decided on the following architecture:
@@ -6,7 +6,7 @@ I have analyzed the requirements and decided on the following architecture:
 Ingestion: I will use Scrapy (not BeautifulSoup) to handle the pagination and multiple URL targets efficiently.
 Storage: I will use SQLite with a normalized schema (separating Faculty info from Research Tags).
 Serving: I will use FastAPI for the delivery layer.
-Please read the document below, acknowledge the constraints (specifically regarding robots.txt and the sqlite3 requirement), and wait for my specific instruction on the first module. Do not generate full code yet."</h6>
+Please read the document below, acknowledge the constraints (specifically regarding robots.txt and the sqlite3 requirement), and wait for my specific instruction on the first module. Do not generate full code yet."</h3>
 
 Understood. I have reviewed the "FacultyFinder" project specifications  and your architectural decisions. I am ready to assist you as your coding partner.
 Here is a summary of the context and constraints we are working with:
@@ -22,7 +22,7 @@ LLM Policy: I acknowledge that our interactions—prompts and responses—must b
 I am ready for your instructions regarding the first module (Ingestion/Scrapy). How would you like to proceed?
 
 
-<h6>2."Let's start with the Storage Layer.
+<h3>2."Let's start with the Storage Layer.
 I have designed the relational schema to comply with the project's requirement for a clean separation between faculty entities and their search tags.Please write a Python script (save it as src/database.py) that initializes a SQLite database at data/faculty.db.
 
 Schema Requirements:
@@ -47,7 +47,7 @@ id (Primary Key)
 faculty_id (Foreign Key linked to faculty.id, with Cascade Delete)
 tag (The individual specialization keyword)
 
-Please use the sqlite3 library and ensure the script creates the folders if they don't exist."</h6>
+Please use the sqlite3 library and ensure the script creates the folders if they don't exist."</h3>
 
 Here is the Python script src/database.py to initialize your storage layer.
 This script adheres to your "Storage" requirements and implements the relational structure (Faculty and Research_Tags) outlined in the project recommendations. It uses sqlite3 to ensure data persistence  and includes the necessary directory management to prevent errors during the setup phase.
@@ -128,7 +128,7 @@ if __name__ == "__main__":
 
 
 
-<h6>"Moving on to the Ingestion Layer.
+<h3>3. "Moving on to the Ingestion Layer.
 
 I have defined the Scrapy Item schema in items.py as follows:
 
@@ -169,7 +169,7 @@ Selector Logic:
 
 Cleaning:
   * Implement a helper function `clean_html` using `w3lib.html.remove_tags` to strip HTML and normalize whitespace.
-  * Handle the `Specializations` field carefully: if it's missing on the detailage, try to grab it from the list view (the fallback)."</h6>
+  * Handle the `Specializations` field carefully: if it's missing on the detailage, try to grab it from the list view (the fallback)."</h3>
 
 
   Here is the spiders/faculty_spider.py code.
@@ -293,7 +293,7 @@ class FacultySpider(scrapy.Spider):
         yield item
 
 
-<h6>"I have finished the ingestion layer. Now moving to Transformation & Loading (ETL).
+<h3>4. "I have finished the ingestion layer. Now moving to Transformation & Loading (ETL).
 I have already performed the data cleaning analysis in a Jupyter Notebook (notebooks/Data_cleaning.ipynb) which exports a clean file named cleaned_faculty_data.csv.
 Task: Please write the migration script (src/migrate.py) to load this clean CSV into our SQLite database.
 
@@ -305,7 +305,7 @@ Column Mapping:
 Map the CSV column Teaching_Clean to the DB column teaching.
 Map Biography_Clean to biography, etc.
 
-Tag Splitting: The Specializations column in the CSV is a comma-separated string. You must split this string in Python and insert multiple rows into the research_tags table for each faculty member."</h6>
+Tag Splitting: The Specializations column in the CSV is a comma-separated string. You must split this string in Python and insert multiple rows into the research_tags table for each faculty member."</h3>
 
 Here is the src/migrate.py script.
 
@@ -426,7 +426,7 @@ if __name__ == "__main__":
     migrate_data()
 
 
-<h6>"Final step: The Serving Layer.
+<h3>5. "Final step: The Serving Layer.
 I need to expose the faculty.db data via a REST API using FastAPI.
 Task: Write the API code (api/main.py) with the following specifications:
 
@@ -434,7 +434,7 @@ Task: Write the API code (api/main.py) with the following specifications:
 2. Endpoints:
 GET /faculty/all: Returns the full list of faculty.
 GET /faculty/search: Accepts a name query parameter (e.g., ?name=Gupta) and performs a SQL LIKE search to return matching profiles.
-3. SQL Logic: Use a helper function to fetch the research_tags for each faculty ID and inject them into the final JSON response.</h6>
+3. SQL Logic: Use a helper function to fetch the research_tags for each faculty ID and inject them into the final JSON response.</h3>
 
 
 
