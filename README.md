@@ -207,13 +207,5 @@ This project is for educational purposes as part of the Data Engineering curricu
 
 - GitHub: [@aarsh-adhvaryu](https://github.com/aarsh-adhvaryu)
 
----
-
-## 🙏 Acknowledgments
-
-- DA-IICT for providing the data source
-- FastAPI and Scrapy communities for excellent documentation
-
----
 
 **⭐ If you found this project helpful, please consider giving it a star!**
