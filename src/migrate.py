@@ -4,8 +4,11 @@ import os
 from database import init_db
 
 # Configuration
-CSV_PATH = r"D:\faculty_finder\data\processed\cleaned_faculty_data.csv"
-DB_PATH = r"D:\faculty_finder\data\faculty.db"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Build paths dynamically
+CSV_PATH = os.path.join(BASE_DIR, "data", "processed", "cleaned_faculty_data.csv")
+DB_PATH = os.path.join(BASE_DIR, "data", "faculty.db")
 
 
 def migrate():

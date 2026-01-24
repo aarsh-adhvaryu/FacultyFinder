@@ -2,7 +2,9 @@ import sqlite3
 import os
 
 # --- Configuration (Absolute Paths to prevent directory errors) ---
-DB_FOLDER = r"D:\faculty_finder\data"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Define the data folder relative to the project root
+DB_FOLDER = os.path.join(BASE_DIR, "data")
 DB_NAME = "faculty.db"
 DB_PATH = os.path.join(DB_FOLDER, DB_NAME)
 

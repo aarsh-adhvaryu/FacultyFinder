@@ -2,11 +2,12 @@ from fastapi import FastAPI, HTTPException, Query, Path
 import sqlite3
 from pydantic import BaseModel
 from typing import List, Optional
+import os
 
 # --- Configuration ---
-# Update this path if your folder structure is different
-DB_PATH = r"D:\faculty_finder\data\faculty.db"
-
+# Get the directory where this script (main.py) is located
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DB_PATH = os.path.join(BASE_DIR, "data", "faculty.db")
 app = FastAPI(title="FacultyFinder API")
 
 
