@@ -58,7 +58,7 @@ D:\faculty_finder\
 
 ### Clone the Repository
 ```bash
-git clone https://github.com/YOUR_USERNAME/FacultyFinder.git
+git clone https://github.com/aarsh-adhvaryu/FacultyFinder.git
 cd FacultyFinder
 ```
 
