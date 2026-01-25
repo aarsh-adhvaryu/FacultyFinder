@@ -200,7 +200,7 @@ Once running, the API provides interactive documentation at:
 
 ### Example Request (Search)
 ```http
-127.0.0.1:51323 - "GET /faculty/search?name=Arpit HTTP/1.1"
+"GET /faculty/search?name=Arpit HTTP/1.1"
 ```
 
 ### Example Response
