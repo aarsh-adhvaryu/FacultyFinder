@@ -608,14 +608,14 @@ import sqlite3
 import os
 from database import init_db
 
- --- CORRECT CONFIGURATION FOR PORTABILITY ---
- Get the project root folder
+ CORRECT CONFIGURATION FOR PORTABILITY <br>
+ Get the project root folder<br>
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
- Build paths dynamically
-CSV_PATH = os.path.join(BASE_DIR, "data", "processed", "cleaned_faculty_data.csv")
+ Build paths dynamically<br>
+CSV_PATH = os.path.join(BASE_DIR, "data", "processed", "cleaned_faculty_data.csv")<br>
 DB_PATH = os.path.join(BASE_DIR, "data", "faculty.db")
- ---------------------------------------------
+ ---------------------------------------------<br>
 
 def migrate():
     # ... rest of your code remains exactly the same ...
