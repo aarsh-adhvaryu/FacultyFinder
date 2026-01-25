@@ -586,17 +586,17 @@ Python
 import sqlite3
 import os
 
-# --- CORRECT CONFIGURATION FOR PORTABILITY ---
-# Get the folder where this script (database.py) is located
+--- CORRECT CONFIGURATION FOR PORTABILITY ---
+ Get the folder where this script (database.py) is located
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# Define the data folder relative to the project root
+ Define the data folder relative to the project root
 DB_FOLDER = os.path.join(BASE_DIR, "data")
 DB_NAME = "faculty.db"
 DB_PATH = os.path.join(DB_FOLDER, DB_NAME)
-# ---------------------------------------------
+ ---------------------------------------------
 
 def init_db():
-    # ... rest of your code remains exactly the same ...
+     ... rest of your code remains exactly the same ...
 2. Fix src/migrate.py
 This ensures the migration script can find the CSV file and the Database on your peer's computer.
 
