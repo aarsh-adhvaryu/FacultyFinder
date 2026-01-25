@@ -569,7 +569,7 @@ Storage: A schema script (src/database.py) and a migration script (src/migrate.p
 Serving: A FastAPI app (api/main.py) to expose the data.</p>
 
 
-<h2>once i submit this much, someone else will work on my dataset, and i will work on someone else, i have to make sure that they dont see any error in my repo when that get my github repo</h2>
+<h2>6. once i submit this much, someone else will work on my dataset, and i will work on someone else, i have to make sure that they dont see any error in my repo when that get my github repo</h2>
 
 <p>This is a very important constraint! If you submit the code with D:\faculty_finder\..., it will crash on your evaluator's computer immediately because they probably don't have a D: drive or a folder named faculty_finder in the exact same spot.
 
@@ -608,14 +608,14 @@ import sqlite3
 import os
 from database import init_db
 
-# --- CORRECT CONFIGURATION FOR PORTABILITY ---
-# Get the project root folder
+ --- CORRECT CONFIGURATION FOR PORTABILITY ---
+ Get the project root folder
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Build paths dynamically
+ Build paths dynamically
 CSV_PATH = os.path.join(BASE_DIR, "data", "processed", "cleaned_faculty_data.csv")
 DB_PATH = os.path.join(BASE_DIR, "data", "faculty.db")
-# ---------------------------------------------
+ ---------------------------------------------
 
 def migrate():
     # ... rest of your code remains exactly the same ...
@@ -631,15 +631,15 @@ from pydantic import BaseModel
 from typing import List, Optional
 import os
 
-# --- CORRECT CONFIGURATION FOR PORTABILITY ---
-# Get the directory where this script (main.py) is located
+ --- CORRECT CONFIGURATION FOR PORTABILITY ---
+ Get the directory where this script (main.py) is located
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "data", "faculty.db")
-# ---------------------------------------------
+ ---------------------------------------------
 
 app = FastAPI(title="FacultyFinder API")
 
-# ... rest of your code remains exactly the same ...
+ ... rest of your code remains exactly the same ...
 Final Step: Verify and Push
 Test Locally: Stop your server, verify these changes, and run uvicorn api.main:app --reload. If it works for you, it works for them.
 
@@ -651,4 +651,4 @@ git commit -m "Switch to relative paths for cross-platform compatibility"
 git push
 Now, when your peer downloads your repo, they can unzip it anywhere (Desktop, C drive, etc.), run the commands, and it will work perfectly without them needing to edit any code.</p>
 
-<h2>this readme file will also serve as my presentation so please add details</h2>
+<h2>7. this readme file will also serve as my presentation so please add details</h2>
