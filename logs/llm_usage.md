@@ -586,14 +586,19 @@ Python
 import sqlite3
 import os
 
---- CORRECT CONFIGURATION FOR PORTABILITY ---
+
+
  Get the folder where this script (database.py) is located
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
  Define the data folder relative to the project root
+
 DB_FOLDER = os.path.join(BASE_DIR, "data")
 DB_NAME = "faculty.db"
 DB_PATH = os.path.join(DB_FOLDER, DB_NAME)
- ---------------------------------------------
+
+
 
 def init_db():
      ... rest of your code remains exactly the same ...
@@ -615,7 +620,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
  Build paths dynamically<br>
 CSV_PATH = os.path.join(BASE_DIR, "data", "processed", "cleaned_faculty_data.csv")<br>
 DB_PATH = os.path.join(BASE_DIR, "data", "faculty.db")
- ---------------------------------------------<br>
+
 
 def migrate():
     # ... rest of your code remains exactly the same ...
@@ -631,11 +636,11 @@ from pydantic import BaseModel
 from typing import List, Optional
 import os
 
- --- CORRECT CONFIGURATION FOR PORTABILITY ---
+
  Get the directory where this script (main.py) is located
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "data", "faculty.db")
- ---------------------------------------------
+
 
 app = FastAPI(title="FacultyFinder API")
 
