@@ -270,8 +270,8 @@ This project is for educational purposes as part of the Data Engineering curricu
 
 ---
 
----
 
+<<<<<<< HEAD
 
 
 ---
@@ -281,3 +281,6 @@ This project is for educational purposes as part of the Data Engineering curricu
 ![GitHub stars](https://img.shields.io/github/stars/aarsh-adhvaryu/FacultyFinder?style=social)
 ![GitHub forks](https://img.shields.io/github/forks/aarsh-adhvaryu/FacultyFinder?style=social)
 ![GitHub issues](https://img.shields.io/github/issues/aarsh-adhvaryu/FacultyFinder)
+=======
+**⭐ If you found this project helpful, please consider giving it a star!**
+>>>>>>> 5be7caf48a83fe3c29973dfc21d878b90c83445a
