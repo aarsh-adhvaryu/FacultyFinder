@@ -207,16 +207,27 @@ GET /faculty/search?name=Gupta HTTP/1.1
 ```json
 [
   {
-    "id": 42,
-    "name": "Manish Gupta",
-    "designation": "Professor",
-    "email": "manish_gupta@daiict.ac.in",
-    "research_interests": [
-      "Information Retrieval",
-      "Data Mining",
-      "Machine Learning"
-    ]
-  }
+  "id": 98,
+  "name": "Arpit Rana",
+  "university": "DA-IICT",
+  "designation": "Regular Faculty",
+  "email": "arpit_rana@dau.ac.in",
+  "contact_number": "079-68261687",
+  "address": "#3105, FB-3, DA-IICT, Gandhinagar, Gujarat, India – 382007",
+  "hyperlink": "https://www.linkedin.com/in/arpitrana/",
+  "profile_url": "https://www.daiict.ac.in/faculty/arpit-rana",
+  "education": "PhD (Computer Science), University College Cork, Ireland",
+  "teaching": "Introduction to Data Mining (Technical Elective - B.Tech.\nIII/ IV Year) Recommendation Systems (Technical Elective - PG Level Course) Data Structures (B.Tech.\nI Year) Object-Oriented Programming (M.Sc.\n(IT) I Year)",
+  "biography": "Dr.\nArpit Rana did his Ph.D.\nfrom University College Cork, Ireland, in 2020.\nBefore joining DA-IICT, He worked as a Postdoctoral Researcher at the Department of Industrial Engineering, University of Toronto (U of T), Canada.",
+  "publications": "Conference Papers Arpit Rana and Derek Bridge.\n2017.\nExplanation Chains: Recommendation by Explanation.\n11th ACM Conference on Recommender Systems Poster Proceedings (RECSYS’17), Como, Italy.\nArpit Rana and Derek Bridge.\n2018.\nExplanations that are Intrinsic to Recommendations.\n26th ACM Conference on User Modeling, Adaptation and Personalization (UMAP’18), Singapore, Singapore.\nArpit Rana and Derek Bridge.\n2020.\nNavigation-By-Preference: A New Conversational Recommender with Preference-Based Feedback.\n25th ACM Conference on Intelligent User Interface (IUI’20), Cagliari, Italy Shengnan Lyu, Arpit Rana, Scott Sanner, and Mohamed Reda Baudjenek.\n2021.\nA Workflow Analysis of Context-Driven Conversational Recommendation, 30th International Conference on the World Wide Web (WWW’21), Ljubljana.\nJournal Articles Arpit Rana, Rafael Martins D'addio, Marcelo Manzato, and Derek Bridge.\n2022.\nExtended Recommendation-By-Explanation.\nUser Modeling and User-Adapted Interaction, Springer.\nArpit Rana, Scott Sanner, Mohamed Reda Baudjenek, Ron Dicarlantonio, and Gary Farmaner.\n2023.\nUser Experience and the Role of Personalization in Critiquing-Based Conversational Recommendation.\nThe ACM Transactions on the Web (TWeb).",
+  "research": null,
+  "research_interests": [
+    "Applied Machine Learning",
+    "Recommendation Systems",
+    "Multimodality",
+    "and their applications in Digital Innovation and Transformation"
+  ]
+}
 ]
 ```
 
@@ -255,10 +266,6 @@ Contributions are welcome! Please follow these steps:
 
 ---
 
-## 📜 License
-
-This project is for educational purposes as part of the Data Engineering curriculum.
-
 ---
 
 ## 👤 Author
@@ -271,16 +278,12 @@ This project is for educational purposes as part of the Data Engineering curricu
 ---
 
 
-<<<<<<< HEAD
-
-
 ---
+
+
 
 ## 📈 Project Stats
 
 ![GitHub stars](https://img.shields.io/github/stars/aarsh-adhvaryu/FacultyFinder?style=social)
 ![GitHub forks](https://img.shields.io/github/forks/aarsh-adhvaryu/FacultyFinder?style=social)
 ![GitHub issues](https://img.shields.io/github/issues/aarsh-adhvaryu/FacultyFinder)
-=======
-**⭐ If you found this project helpful, please consider giving it a star!**
->>>>>>> 5be7caf48a83fe3c29973dfc21d878b90c83445a
