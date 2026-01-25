@@ -650,3 +650,5 @@ git add .
 git commit -m "Switch to relative paths for cross-platform compatibility"
 git push
 Now, when your peer downloads your repo, they can unzip it anywhere (Desktop, C drive, etc.), run the commands, and it will work perfectly without them needing to edit any code.</p>
+
+<h2>this readme file will also serve as my presentation so please add details</h2>
