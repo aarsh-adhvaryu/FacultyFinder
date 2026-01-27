@@ -283,7 +283,24 @@ Contributions are welcome! Please follow these steps:
 
 
 ## 📈 Project Stats
+Before migrating data to the production database, we performed a comprehensive audit in the `Transformation Layer`.
 
+### 1. Dataset Overview
+* **Total Profiles Scraped:** 111 Faculty Members
+* **Source Coverage:** Regular Faculty, Adjuncts, and Distinguished Professors.
+
+### 2. Data Completeness Audit
+We visualized the dataset using a **Nullity Heatmap** to identify missing information patterns.
+
+* **High Availability:** `Name`, `Email`, and `Profile_URL` are present in **99%** of records.
+* **The "Visiting Faculty" Gap:** Fields like `Research` (87% missing) and `Biography` (37% missing) showed significant gaps.
+    * *Insight:* This confirmed the necessity of our **"Scenario B" Scrapy logic**. Since many visiting faculty do not have full bio pages, our fallback scraper successfully captured their `Specializations` from the summary card, ensuring we didn't lose critical data.
+
+### 3. Research Landscape (Normalization Results)
+By splitting the comma-separated `Specializations` string, we transformed unstructured text into structured insights.
+* **Raw Input:** "AI, Machine Learning, Deep Learning"
+* **Normalized Output:** 3 distinct rows in the `research_tags` table.
+* **Impact:** This enables queries like *"Show me the Top 5 Research Areas at DA-IICT"* (e.g., VLSI, Signal Processing, Machine Learning) which were impossible with the raw string format.
 ![GitHub stars](https://img.shields.io/github/stars/aarsh-adhvaryu/FacultyFinder?style=social)
 ![GitHub forks](https://img.shields.io/github/forks/aarsh-adhvaryu/FacultyFinder?style=social)
 ![GitHub issues](https://img.shields.io/github/issues/aarsh-adhvaryu/FacultyFinder)
