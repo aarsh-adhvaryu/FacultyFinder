@@ -301,6 +301,8 @@ By splitting the comma-separated `Specializations` string, we transformed unstru
 * **Raw Input:** "AI, Machine Learning, Deep Learning"
 * **Normalized Output:** 3 distinct rows in the `research_tags` table.
 * **Impact:** This enables queries like *"Show me the Top 5 Research Areas at DA-IICT"* (e.g., VLSI, Signal Processing, Machine Learning) which were impossible with the raw string format.
-![GitHub stars](https://img.shields.io/github/stars/aarsh-adhvaryu/FacultyFinder?style=social)
+
+
+ ![GitHub stars](https://img.shields.io/github/stars/aarsh-adhvaryu/FacultyFinder?style=social)
 ![GitHub forks](https://img.shields.io/github/forks/aarsh-adhvaryu/FacultyFinder?style=social)
 ![GitHub issues](https://img.shields.io/github/issues/aarsh-adhvaryu/FacultyFinder)
