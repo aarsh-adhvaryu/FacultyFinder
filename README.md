@@ -76,7 +76,7 @@ By splitting comma-separated strings during the **Transformation** phase, we tur
 - **Image Pipeline**: Extracts and resolves high-resolution faculty profile photos directly from the DOM, with fallback logic for list-view thumbnails.
 
 ### 2. 🧹 Data Transformation (Pandas)
-- **Audit Trail**: A dedicated notebook (`clean_data.py`) visualizes data health.
+- **Audit Trail**: A dedicated file (`clean_data.py`) for  data health.
 - **Sanitization**: Strips HTML artifacts using `w3lib` for clean NLP-ready text.
 - **Deadlock Resolution**: Solved Scrapy's "Append Mode" issue by enforcing atomic file overwrites in `settings.py`, guaranteeing fresh data on every run.
 
