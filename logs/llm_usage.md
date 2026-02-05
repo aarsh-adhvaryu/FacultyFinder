@@ -657,3 +657,630 @@ git push
 Now, when your peer downloads your repo, they can unzip it anywhere (Desktop, C drive, etc.), run the commands, and it will work perfectly without them needing to edit any code.</p>
 
 <h2>7. this readme file will also serve as my presentation so please add details</h2>
+<h2>8. changes to be made in scraper for the use of photo url</h2>
+
+<p>This is the perfect time to integrate the image scraping. Based on the HTML you provided, the image URL is located inside the .facultyPhoto div in the src attribute of the <img> tag.
+
+Here is the Complete "Run From Scratch" Plan. I have updated every single file to handle the new Image URL and ensure the pipeline is unbroken.
+
+1. Update the Scraper (src/scraper.py)
+I have updated the scraping logic to grab the image URL and convert it from a relative path (e.g., /sites/...) to a full URL (https://www.daiict.ac.in/sites/...).
+
+Create/Overwrite src/scraper.py:
+
+Python
+import scrapy
+from scrapy.crawler import CrawlerProcess
+import json
+import os
+
+class FacultySpider(scrapy.Spider):
+    name = "faculty"
+    start_urls = ['https://www.daiict.ac.in/faculty']
+
+    def parse(self, response):
+        # We iterate over each faculty card
+        for faculty in response.css('.facultyDetails'):
+            
+            # 1. Extract Name & Profile URL
+            name = faculty.css('.personalDetails h3 a::text').get()
+            profile_url = faculty.css('.personalDetails h3 a::attr(href)').get()
+            
+            # 2. Extract Image URL (NEW)
+            image_src = faculty.css('.facultyPhoto img::attr(src)').get()
+            full_image_url = response.urljoin(image_src) if image_src else None
+
+            # 3. Extract Meta Data
+            education = faculty.css('.facultyEducation::text').get()
+            
+            # Extract email (cleanup needed usually)
+            email = faculty.css('.facultyemail::text').get()
+            
+            # Extract Research Interests
+            # The HTML shows interests are in a <p> tag inside .areaSpecialization
+            interests = faculty.css('.areaSpecialization p::text').getall()
+            # Clean up the list
+            interests = [i.strip() for i in interests if i.strip()]
+            
+            if name:
+                yield {
+                    'name': name.strip(),
+                    'image_url': full_image_url,
+                    'profile_url': profile_url,
+                    'education': education.strip() if education else None,
+                    'email': email.strip() if email else None,
+                    'research_interests': interests,
+                    # We will visit the profile page to get more details (Bio, etc)
+                    # For now, we return the base data. To go deeper, we'd yield a request.
+                    # But for this "Single Page" test, this is enough.
+                }
+
+# --- Runner Code ---
+if __name__ == "__main__":
+    # 1. Setup Data Folder
+    if not os.path.exists('data'):
+        os.makedirs('data')
+    
+    # 2. Delete old file if exists
+    output_file = 'data/faculty_data.json'
+    if os.path.exists(output_file):
+        os.remove(output_file)
+
+    # 3. Run Spider
+    process = CrawlerProcess(settings={
+        'FEEDS': {
+            output_file: {'format': 'json', 'encoding': 'utf8', 'indent': 4},
+        },
+        'LOG_LEVEL': 'INFO',
+        'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    })
+
+    process.crawl(FacultySpider)
+    process.start()
+    
+    print(f"✅ Scraping Complete. Data saved to {output_file}")
+2. Update the Brain (src/vector_engine.py)
+We need to pass the image_url through the engine so the API can receive it.
+
+Overwrite src/vector_engine.py:
+
+Python
+import json
+import os
+import numpy as np
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+
+class FacultyVectorEngine:
+    def __init__(self, model_name='all-MiniLM-L6-v2'):
+        print(f"⏳ Loading AI Model ({model_name})...")
+        self.model = SentenceTransformer(model_name)
+        self.corpus_embeddings = None
+        self.metadata = []
+        print("✅ AI Model Loaded.")
+
+    def fit(self, raw_documents):
+        print(f"⚙️  Vectorizing {len(raw_documents)} profiles...")
+        self.metadata = raw_documents
+        text_corpus = []
+
+        for doc in raw_documents:
+            name = str(doc.get("name", ""))
+            # Use get() with default empty strings to avoid crashes
+            bio = str(doc.get("biography", "")) 
+            research = str(doc.get("research_interests", "")) 
+            if isinstance(doc.get("research_interests"), list):
+                research = ", ".join(doc.get("research_interests"))
+            
+            education = str(doc.get("education", ""))
+            
+            # The AI reads this text to understand the professor
+            full_text = f"Professor {name}. Education: {education}. Research Interests: {research}. Biography: {bio}"
+            text_corpus.append(full_text)
+
+        self.corpus_embeddings = self.model.encode(text_corpus, convert_to_tensor=True)
+        self.corpus_embeddings = self.corpus_embeddings.cpu().numpy()
+        print("✅ Database Vectorized.")
+
+    def search(self, query, top_k=5):
+        query_embedding = self.model.encode([query], convert_to_tensor=True).cpu().numpy()
+        scores = cosine_similarity(query_embedding, self.corpus_embeddings)[0]
+        top_indices = np.argsort(scores)[::-1][:top_k]
+
+        results = []
+        for idx in top_indices:
+            score = scores[idx]
+            if score > 0.15: 
+                prof = self.metadata[idx]
+                results.append({
+                    "name": prof.get("name"),
+                    "score": round(float(score), 4),
+                    # --- PASSING THE NEW IMAGE URL ---
+                    "image_url": prof.get("image_url"), 
+                    "tags": prof.get("research_interests"),
+                    "email": prof.get("email"),
+                    "profile_url": prof.get("profile_url"),
+                    "education": prof.get("education", "Not listed"),
+                    "research": str(prof.get("research_interests", "")), # fallback for summary
+                    "publications": prof.get("publications", "Not listed")
+                })
+        return results
+
+if __name__ == "__main__":
+    # Test Block
+    path = "data/faculty_data.json"
+    if os.path.exists(path):
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        engine = FacultyVectorEngine()
+        engine.fit(data)
+        print("Test Search 'Machine Learning':", engine.search("Machine Learning", 1))
+3. Update the API (api/main.py)
+We update the startup logic to look for our new scraped file name (faculty_data.json).
+
+Overwrite api/main.py:
+
+Python
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import os
+import sys
+import json
+
+# --- Configuration ---
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(BASE_DIR)
+
+# --- IMPORT THE NEW ENGINE ---
+try:
+    from src.vector_engine import FacultyVectorEngine
+except ImportError:
+    print("⚠️ Warning: Could not import FacultyVectorEngine.")
+    FacultyVectorEngine = None
+
+app = FastAPI(title="FacultyFinder AI", version="3.0")
+
+# --- Global Model State ---
+recommendation_engine = None
+
+class QueryRequest(BaseModel):
+    query: str
+    top_k: int = 150
+
+@app.on_event("startup")
+def load_ml_model():
+    global recommendation_engine
+    if FacultyVectorEngine is None: return
+
+    # We look for the file generated by the new scraper
+    data_path = os.path.join(BASE_DIR, "data", "faculty_data.json")
+            
+    if not os.path.exists(data_path):
+        print(f"⚠️ Warning: {data_path} not found. Run the scraper first!")
+        return
+
+    print(f"⚙️  Loading Knowledge Base from: {data_path}")
+    try:
+        with open(data_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        recommendation_engine = FacultyVectorEngine()
+        recommendation_engine.fit(data)
+        print("✅ Semantic Search Engine Online.")
+    except Exception as e:
+        print(f"❌ Failed to load model: {e}")
+
+@app.post("/recommend")
+def get_recommendations(request: QueryRequest):
+    if not recommendation_engine:
+        raise HTTPException(status_code=503, detail="AI Model is loading or data missing.")
+    results = recommendation_engine.search(request.query, request.top_k)
+    return {"query": request.query, "results": results}
+4. Update the Frontend (frontend/ui.py)
+Now we use the real image URL!
+
+Overwrite frontend/ui.py:
+
+Python
+import streamlit as st
+import requests
+import re
+
+API_URL = "http://127.0.0.1:8000/recommend"
+
+st.set_page_config(page_title="FacultyFinder AI", page_icon="🎓", layout="wide")
+
+st.markdown("""
+<style>
+    .stApp { background-color: #0e1117; }
+    .highlight { color: #00ffa3; font-weight: bold; }
+    img { border-radius: 8px; }
+</style>
+""", unsafe_allow_html=True)
+
+def format_publications(text):
+    if not text or text == "Not listed": return "No publications available."
+    text = text.replace("Conference Papers", "\n\n**Conference Papers**\n")
+    text = text.replace("Journal Articles", "\n\n**Journal Articles**\n")
+    text = re.sub(r'(\d{4}\.)', r'\1\n\n* ', text)
+    return text
+
+st.title("🎓 FacultyFinder AI")
+st.markdown("##### *(Powered by Semantic Vector Search & Transformers)*") 
+
+with st.container():
+    query = st.text_area("Describe your research interests:", height=100)
+    if st.button("🔍 Find Faculty", type="primary"):
+        if not query.strip():
+            st.warning("Please enter some text first!")
+        else:
+            with st.spinner("Analyzing profiles..."):
+                try:
+                    response = requests.post(API_URL, json={"query": query, "top_k": 150})
+                    if response.status_code == 200:
+                        results = response.json().get("results", [])
+                        if not results:
+                            st.info("No matches found.")
+                        else:
+                            st.success(f"Found {len(results)} matches!")
+                            for rank, prof in enumerate(results, 1):
+                                with st.container():
+                                    st.markdown("---")
+                                    col_img, col_info = st.columns([1.5, 5])
+                                    with col_img:
+                                        # --- NEW IMAGE LOGIC ---
+                                        img_url = prof.get('image_url')
+                                        # Use the real URL if it exists, otherwise the placeholder
+                                        if img_url and "http" in img_url:
+                                            st.image(img_url, width=150)
+                                        else:
+                                            st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=120)
+                                        
+                                        st.caption(f"✅ Score: {prof.get('score'):.4f}")
+                                        if prof.get('profile_url'):
+                                            st.link_button("🌐 Visit Profile", prof['profile_url'])
+
+                                    with col_info:
+                                        st.subheader(f"{rank}. {prof['name']}")
+                                        st.markdown(f"**🎓 Education:** {prof.get('education', 'N/A')}")
+                                        
+                                        tags = prof.get('tags', [])
+                                        if isinstance(tags, list): tags = ", ".join(tags)
+                                        st.markdown(f"**🔬 Interests:** {tags}")
+                                        
+                                        if prof.get('email'): st.markdown(f"📧 `{prof.get('email')}`")
+
+                                        with st.expander("📖 View Details"):
+                                            st.markdown("#### Research Interests")
+                                            st.write(tags)
+                    else:
+                        st.error("API Error")
+                except Exception as e:
+                    st.error(f"Connection Failed: {e}")</p>
+
+<h2>9. For project 2 we will use transformer</h2>
+
+<p>It takes courage to kill your darling code, but this is the right engineering decision. We are moving from a Lexical Search (Keyword Matching) to a Semantic Search (Meaning Matching).
+
+Here is your "Demolition & Reconstruction" plan.
+
+🗑️ Step 1: The Cleanup (Delete)
+Delete the file src/bm25.py. (We don't need the math anymore).
+
+Delete src/__pycache__ folder if it exists.
+
+📦 Step 2: The Setup (Install)
+You need the libraries that power the AI. Run this in your terminal:
+
+PowerShell
+pip install sentence-transformers scikit-learn
+(Note: This might take a minute. It installs Torch and the Transformer libraries).
+
+🧠 Step 3: The New Engine (src/vector_engine.py)
+Create a new file src/vector_engine.py. This code is cleaner, shorter, and 10x smarter than the BM25 code.
+
+Python
+import json
+import os
+import numpy as np
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+
+class FacultyVectorEngine:
+    def __init__(self, model_name='all-MiniLM-L6-v2'):
+        """
+        Initializes the Semantic Search Engine.
+        Downloads the 'all-MiniLM-L6-v2' model (80MB) automatically.
+        This model translates text into 384-dimensional vectors.
+        """
+        print(f"⏳ Loading AI Model ({model_name})...")
+        # This will download the model to your local cache the first time
+        self.model = SentenceTransformer(model_name)
+        self.corpus_embeddings = None
+        self.metadata = []
+        print("✅ AI Model Loaded.")
+
+    def fit(self, raw_documents):
+        """
+        Ingests profiles and converts them into Vectors.
+        """
+        print(f"⚙️  Vectorizing {len(raw_documents)} profiles... (Please wait)")
+        
+        self.metadata = raw_documents
+        text_corpus = []
+
+        for doc in raw_documents:
+            # 1. Construct a "Natural Language" representation of the professor
+            # We combine all fields into a single descriptive paragraph.
+            name = str(doc.get("name", ""))
+            bio = str(doc.get("biography", ""))
+            research = str(doc.get("research", "")) # Critical for Dr. Rana
+            teaching = str(doc.get("teaching", "")) # Critical for Sourish
+            
+            tags = doc.get("research_interests", "")
+            if isinstance(tags, list): 
+                tags = ", ".join([str(t) for t in tags])
+            
+            # This string is what the AI 'reads'
+            full_text = f"Professor {name}. \nBiography: {bio}\nResearch Areas: {research}\nTeaching: {teaching}\nKeywords: {tags}"
+            text_corpus.append(full_text)
+
+        # 2. Encode: Text -> Vector (The Magic Step)
+        # This converts the list of strings into a Matrix of numbers
+        self.corpus_embeddings = self.model.encode(text_corpus, convert_to_tensor=True)
+        
+        # Move to CPU for compatibility
+        self.corpus_embeddings = self.corpus_embeddings.cpu().numpy()
+        
+        print("✅ Database Vectorized & Ready.")
+
+    def search(self, query, top_k=5):
+        """
+        Finds the most semantically similar profiles to the query.
+        """
+        # 1. Vectorize the User's Query
+        query_embedding = self.model.encode([query], convert_to_tensor=True).cpu().numpy()
+
+        # 2. Calculate Cosine Similarity (The "Angle" between vectors)
+        # Result is an array of scores between 0 (complete opposite) and 1 (exact match)
+        scores = cosine_similarity(query_embedding, self.corpus_embeddings)[0]
+
+        # 3. Sort & Rank
+        top_indices = np.argsort(scores)[::-1][:top_k]
+
+        results = []
+        for idx in top_indices:
+            score = scores[idx]
+            
+            # Threshold: Ignore matches that are too weak (< 0.25)
+            # This prevents random noise results
+            if score > 0.25: 
+                prof = self.metadata[idx]
+                results.append({
+                    "name": prof.get("name"),
+                    "score": round(float(score), 4),
+                    "tags": prof.get("research_interests") or "General Research",
+                    "profile_url": prof.get("profile_url"),
+                    "email": prof.get("email")
+                })
+        
+        return results
+
+# --- Independent Test Block ---
+if __name__ == "__main__":
+    # Check if data exists
+    path = "response_1770110808513.json" 
+    if not os.path.exists(path): path = "data/" + path
+    
+    if os.path.exists(path):
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            
+        engine = FacultyVectorEngine()
+        engine.fit(data)
+        
+        # Test 1: The "Dr. Rana" Case
+        print("\n🔎 Test 1: 'Deep Learning' (Should find Dr. Rana's Applied ML)")
+        results = engine.search("Deep Learning")
+        for r in results[:3]: print(f"[{r['score']}] {r['name']}")
+
+        # Test 2: The "Sourish" Case
+        print("\n🔎 Test 2: 'LLM' (Should find Sourish's Large Language Models)")
+        results = engine.search("LLM")
+        for r in results[:3]: print(f"[{r['score']}] {r['name']}")
+
+        # Test 3: The "Amit" Case
+        print("\n🔎 Test 3: 'Machine Learning' (Should find Amit Mankodi)")
+        results = engine.search("Machine Learning")
+        for r in results[:3]: print(f"[{r['score']}] {r['name']}")
+🔌 Step 4: Wire it up (api/main.py)
+You need to tell your API to use this new engine instead of the old one.
+
+Open api/main.py and update these two parts:
+
+Part A: The Import (Top of file)
+
+Python
+# CHANGE THIS:
+# from src.bm25 import BM25 
+# TO THIS:
+from src.vector_engine import FacultyVectorEngine
+Part B: The Startup Logic (Middle of file)
+
+Python
+# Find the @app.on_event("startup") function
+# Update the initialization line inside the 'try' block:
+
+        # Initialize and Train the Engine
+        # recommendation_engine = BM25()  <-- DELETE THIS
+        # recommendation_engine.fit(data) <-- DELETE THIS
+        
+        recommendation_engine = FacultyVectorEngine() # <-- ADD THIS
+        recommendation_engine.fit(data)               # <-- ADD THIS
+🧪 Step 5: Run the Test
+Run the engine file directly first to see the magic happen:
+
+PowerShell
+python src/vector_engine.py
+It will download the model (green bar) and run the 3 tests. You should see Dr. Rana, Sourish, and Amit all showing up in the correct places without you writing a single line of dictionary code.
+
+Tell me if the test results look good!</p>
+
+<h2>Deployment on Streamlit</h2>
+
+
+
+
+Deploying on Streamlit Community Cloud is the easiest way to share your project, but there is one major architectural catch you need to handle first.
+
+⚠️ The Deployment Problem
+Streamlit Cloud is designed to host only the frontend. It cannot talk to the uvicorn API running on your laptop (localhost).
+
+To deploy this successfully "from Streamlit," we need to use the "Monolith Approach". We will modify frontend/ui.py slightly so it imports the Brain (Vector Engine) directly, instead of asking the API for answers.
+
+This keeps your project structure intact but makes it deployable in one click.
+
+🛠️ Step 1: Update frontend/ui.py (The "All-in-One" Version)
+Overwrite your frontend file with this code. It uses st.cache_resource to load the AI model once when the app starts, just like your backend did.
+
+Python
+import streamlit as st
+import sqlite3
+import os
+import sys
+
+# --- PATH SETUP (Crucial for Cloud) ---
+# This tells Streamlit where to find your 'src' folder
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+
+try:
+    from src.vector_engine import FacultyVectorEngine
+except ImportError:
+    st.error("❌ Could not import the Brain. Check your folder structure.")
+    st.stop()
+
+# --- CONFIGURATION ---
+DB_PATH = os.path.join(parent_dir, "data", "faculty.db")
+
+st.set_page_config(page_title="FacultyFinder AI", page_icon="🎓", layout="wide")
+
+# Custom CSS
+st.markdown("""
+<style>
+    .stApp { background-color: #0e1117; }
+    .highlight { color: #00ffa3; font-weight: bold; }
+    img { border-radius: 8px; }
+</style>
+""", unsafe_allow_html=True)
+
+# --- 🧠 THE BRAIN (Cached) ---
+# This replaces the API. It runs inside Streamlit now.
+@st.cache_resource
+def load_engine():
+    if not os.path.exists(DB_PATH):
+        return None
+    
+    # 1. Load Data from DB
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute("SELECT * FROM faculty").fetchall()
+    conn.close()
+    
+    data = [dict(row) for row in rows]
+    
+    # 2. Map Columns (Same logic as your API)
+    formatted_data = []
+    for item in data:
+        formatted_data.append({
+            "name": item.get("Name"),
+            "biography": item.get("Biography"),
+            "research_interests": item.get("Specializations") or item.get("Research"),
+            "education": item.get("Education"),
+            "email": item.get("Email_ID"),
+            "profile_url": item.get("Profile_URL"),
+            "image_url": item.get("Photo_URL"),  # <--- CRITICAL
+            "publications": item.get("Publications"),
+            "teaching": item.get("Teaching")
+        })
+        
+    # 3. Initialize AI
+    engine = FacultyVectorEngine()
+    engine.fit(formatted_data)
+    return engine
+
+# Load the engine immediately
+engine = load_engine()
+
+# --- UI LOGIC ---
+st.title("🎓 FacultyFinder AI")
+st.markdown("##### *(Powered by Semantic Vector Search & Transformers)*") 
+
+if not engine:
+    st.error(f"⚠️ Database not found at `{DB_PATH}`. Please run `src/migrate.py` locally and push `faculty.db` to GitHub.")
+    st.stop()
+
+with st.container():
+    query = st.text_area("Describe your research interests:", height=100)
+    
+    if st.button("🔍 Find Faculty", type="primary"):
+        if not query.strip():
+            st.warning("Please enter some text first!")
+        else:
+            with st.spinner("Analyzing profiles..."):
+                # Direct Search (No API Call)
+                results = engine.search(query, top_k=150)
+                
+                if not results:
+                    st.info("No matches found.")
+                else:
+                    st.success(f"Found {len(results)} matches!")
+                    
+                    for rank, prof in enumerate(results, 1):
+                        with st.container():
+                            st.markdown("---")
+                            col_img, col_info = st.columns([1.5, 5])
+                            
+                            with col_img:
+                                img = prof.get('image_url')
+                                if img and img.startswith("http"):
+                                    st.image(img, width=120)
+                                else:
+                                    st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=120)
+                                
+                                st.caption(f"✅ Score: {prof.get('score'):.4f}")
+                                if prof.get('profile_url'):
+                                    st.link_button("🌐 Visit Profile", prof['profile_url'])
+
+                            with col_info:
+                                st.subheader(f"{rank}. {prof['name']}")
+                                st.markdown(f"**🎓 Education:** {prof.get('education', 'N/A')}")
+                                
+                                tags = prof.get('tags', '')
+                                if tags: st.markdown(f"**🔬 Interests:** {tags}")
+                                
+                                if prof.get('email'): st.markdown(f"📧 `{prof.get('email')}`")
+
+                                with st.expander("📖 View Details"):
+                                    st.markdown("#### Research Focus")
+                                    # Fallback logic
+                                    bio = prof.get('biography')
+                                    if bio and len(bio) > 20:
+                                        st.write(bio)
+                                    else:
+                                        st.write(tags)
+📦 Step 2: Prepare requirements.txt
+Streamlit Cloud needs to know what libraries to install. Since we are moving the "Brain" to the frontend, you must ensure the AI libraries are listed here.
+
+Overwrite requirements.txt with:
+
+Plaintext
+streamlit
+pandas
+numpy
+scikit-learn
+sentence-transformers
+torch
+
+
+
