@@ -1,308 +1,228 @@
-# 🎓 FacultyFinder: End-to-End Data Engineering Pipeline
+# 🎓 FacultyFinder: AI-Powered Academic Search Engine
 
-![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.95%2B-green)
-![Scrapy](https://img.shields.io/badge/Scrapy-2.11-orange)
-![SQLite](https://img.shields.io/badge/Database-SQLite3-lightgrey)
+**Project 1: The Data Engineering Pipeline & Project 2: Semantic Intelligence Upgrade**  
+*From Unstructured HTML to a RAG-Ready Knowledge Base*
 
-## 📌 Project Abstract
+---
 
-**FacultyFinder** is a specialized Data Engineering pipeline built to solve the challenge of accessing unstructured university data.
+## 📌 Abstract
 
-Most university websites lock valuable faculty information (research interests, publications, contact info) inside complex HTML structures, making it inaccessible for analysis or AI applications. This project automates the **extraction, cleaning, normalization, and serving** of this data, transforming raw HTML into a structured API ready for downstream tasks like **RAG (Retrieval-Augmented Generation)** or **Academic Analytics**.
+FacultyFinder is an end-to-end **Data Engineering** solution designed to solve the challenge of accessing unstructured university data. Academic websites often trap critical information—such as research interests, publications, and contact details—inside complex, inconsistent HTML structures, making it inaccessible for analysis or AI applications.
+
+This project automates the **ETL (Extract, Transform, Load)** pipeline to scrape, clean, and structure this data into a relational database. It serves as the foundational "Knowledge Layer" for **Project 2**, enabling advanced AI applications like **Semantic Search** and **RAG (Retrieval-Augmented Generation)**.
 
 ---
 
 ## 🏗️ System Architecture
 
-The pipeline follows a standard **ETL (Extract, Transform, Load)** pattern with a decoupled Serving Layer.
+The system follows a modular architecture, decoupling the ingestion pipeline from the intelligence layer.
 ```mermaid
 graph LR
-    A[🌍 DA-IICT Website] -->|Scrapy Spider| B(🕷️ Ingestion Layer)
-    B -->|Raw CSV| C{🧹 Transformation Layer}
-    C -->|Pandas & Regex| D[Cleaned CSV]
+    A[🌍 University Website] -->|Scrapy Spider| B(🕷️ Ingestion Layer)
+    B -->|Raw CSV + Images| C{🧹 Transformation Layer}
+    C -->|Pandas & Regex| D[Cleaned Data]
     D -->|Migration Script| E[(🗄️ SQLite Database)]
-    E -->|SQL Queries| F[🚀 Serving Layer - FastAPI]
-    F -->|JSON Response| G[👨‍💻 Client / AI Model]
+    E -->|Structured Data| F[🧠 Vector Engine]
+    F -->|Semantic Embeddings| G[🚀 Streamlit Cloud]
 ```
 
----
-
-## 🚀 Key Features & Technical Decisions
-
-### 1. Robust Ingestion (Scrapy)
-
-**Why Scrapy?** Unlike BeautifulSoup (which is just a parser), Scrapy is a complete framework that handles asynchronous requests, rate-limiting (to respect server load), and pagination automatically.
-
-**Capabilities:**
-- Crawls 5+ different faculty categories (Regular, Adjunct, Distinguished, etc.)
-- Handles **"Scenario A vs. Scenario B" logic**: intelligently detects if a faculty member has a full profile page or just a summary card
-
-### 2. Intelligent Transformation (Pandas)
-
-**Auditing:** A dedicated Jupyter Notebook (`Data_cleaning.ipynb`) audits data quality before it touches the database.
-
-**Cleaning:**
-- Strips HTML tags using `w3lib`
-- Normalizes whitespace and encoding issues
-- **Tag Splitting:** Converts comma-separated strings (e.g., "AI, ML, IoT") into individual rows for the relational database
-
-### 3. Relational Storage (SQLite)
-
-**Schema Design:** The database is normalized (3NF) to avoid redundancy.
-
-**Design Decision:** We separated Research Tags into a child table to allow for fast, index-based filtering by interest, rather than slow full-text searches on a single blob column.
-
-### 4. High-Performance Serving (FastAPI)
-
-**Why FastAPI?** It provides automatic schema validation (Pydantic) and auto-generated Swagger documentation.
-
-**Endpoints:**
-- `GET /faculty/all` - Full dump for analytics
-- `GET /faculty/{id}` - O(1) Lookup for details
-- `GET /faculty/search?name=X` - Search functionality
+### Data Flow:
+1. **Ingestion**: A custom Scrapy spider crawls the university domain, handling dynamic content and extracting images.
+2. **Transformation**: Pandas scripts clean text, audit quality, and normalize entities (e.g., splitting tags).
+3. **Storage**: Data is loaded into a normalized SQLite database.
+4. **Vectorization (Project 2)**: Text is embedded into high-dimensional vectors for AI retrieval.
+5. **Serving**: A monolithic Streamlit app loads the search index and serves the frontend.
 
 ---
 
-## 📊 Database Schema (ER Diagram)
+## 📊 Data Quality & Statistics
 
-We utilize a **One-to-Many** relationship between Faculty profiles and Research Interests.
-```mermaid
-erDiagram
-    FACULTY ||--o{ RESEARCH_TAGS : has
-    FACULTY {
-        int id PK
-        string name
-        string email
-        string designation
-        text biography
-        text publications
-        text teaching
-    }
-    RESEARCH_TAGS {
-        int id PK
-        int faculty_id FK
-        string tag
-    }
-```
+Before migrating data to the production database, a comprehensive audit was performed in the **Transformation Layer** to ensure integrity.
+
+### 1. Dataset Overview
+- **Total Profiles Scraped**: 112 Faculty Members
+- **Source Coverage**: Regular Faculty, Adjuncts, Distinguished Professors, and Visiting Faculty.
+
+### 2. Missing Data Analysis (The "Visiting Faculty" Gap)
+
+We visualized the dataset using a **Nullity Heatmap** during the cleaning phase to identify patterns in missing information.
+
+| Field             | Availability | Insight                                                                 |
+|-------------------|--------------|-------------------------------------------------------------------------|
+| Name / Email      | 99%          | High availability; core identity fields are consistent.                 |
+| Profile Photo     | 95%          | Successfully recovered via the custom Image Pipeline.                   |
+| Biography         | ~63%         | **Significant Gap**: Many Visiting/Adjunct faculty lack full bio pages. |
+| Research Summary  | ~13%         | **Critical Gap**: Most profiles do not have a dedicated "Research" text block. |
+
+**Engineering Decision:**  
+This audit confirmed the necessity of our **"Scenario B"** Scrapy logic. Since many visiting faculty do not have full bio pages (causing the 37% gap), our fallback scraper successfully captured their **Specializations (Tags)** from the summary card instead. This ensured we didn't lose critical research data for ~40% of the dataset.
+
+### 3. Normalization Results
+
+By splitting comma-separated strings during the **Transformation** phase, we turned unstructured text into structured insights.
+
+- **Raw Input**: `"AI, Machine Learning, Deep Learning"`
+- **Normalized Output**: 3 distinct vectorizable tags.
+
+**Impact**: This enabled the **"Top 5"** magic command feature, allowing the AI to filter results by specific sub-domains rather than just keyword matching.
 
 ---
 
-## 🛠️ Tech Stack
+## 🚀 Key Features
 
-| Component | Tool | Purpose |
-|-----------|------|---------|
-| **Language** | Python 3.9+ | Core logic and scripting |
-| **Ingestion** | Scrapy | Asynchronous web crawling |
-| **Processing** | Pandas | Data cleaning and manipulation |
-| **Storage** | SQLite3 | Relational persistence |
-| **API** | FastAPI / Uvicorn | RESTful API creation and serving |
-| **Validation** | Pydantic | Data validation and serialization |
+### 1. 🕷️ Intelligent Ingestion (Scrapy)
+- **Polymorphic Scraping**: Automatically detects if a faculty member has a full profile page ("Scenario A") or just a summary card ("Scenario B") and switches extraction logic instantly.
+- **Deep Crawling**: Navigates through 5+ different faculty categories.
+- **Image Pipeline**: Extracts and resolves high-resolution faculty profile photos directly from the DOM, with fallback logic for list-view thumbnails.
+
+### 2. 🧹 Data Transformation (Pandas)
+- **Audit Trail**: A dedicated notebook (`Data_cleaning.ipynb`) visualizes data health.
+- **Sanitization**: Strips HTML artifacts using `w3lib` for clean NLP-ready text.
+- **Deadlock Resolution**: Solved Scrapy's "Append Mode" issue by enforcing atomic file overwrites in `settings.py`, guaranteeing fresh data on every run.
+
+### 3. 🧠 Semantic Search (The Brain)
+- **Vector Engine**: Uses `sentence-transformers/all-MiniLM-L6-v2` to convert faculty bios into 384-dimensional vectors.
+- **Contextual Matching**: Allows users to search by concept (e.g., "Who works on self-driving cars?") rather than just keywords.
+
+### 4. 🌐 Cloud Deployment
+- **Monolithic Deployment**: Hosted on Streamlit Community Cloud for instant accessibility.
+- **CI/CD**: Automatic updates via GitHub integration.
 
 ---
 
 ## 📂 Project Structure
-```text
+```
 FacultyFinder/
 │
-├── api/                       # Serving Layer (FastAPI)
-│   └── main.py                # Endpoints & Pydantic Models
-│
-├── daiict_scraper/            # Ingestion Layer (Scrapy)
+├── daiict_scraper/              # Ingestion Layer (Scrapy)
 │   └── daiict_scraper/
 │       ├── spiders/
-│       │   └── faculty_spider.py  # The Spider Logic
-│       └── items.py           # Data Structure Definitions
+│       │   └── faculty_spider.py # The Custom Spider
+│       └── settings.py           # Pipeline Configuration (Overwrite logic)
 │
-├── data/                      # Storage Layer
-│   ├── raw/                   # Bronze Layer: Raw Scrapy output
-│   ├── processed/             # Silver Layer: Cleaned CSVs
-│   └── faculty.db             # Gold Layer: Final SQLite Database
+├── data/                        # Storage Layer
+│   ├── raw/                     # Bronze Layer: Raw Scrapy CSVs
+│   ├── processed/               # Silver Layer: Cleaned Data
+│   └── faculty.db               # Gold Layer: SQLite Database
 │
-├── notebooks/                 # Analysis Layer
-│   └── Data_cleaning.ipynb    # Logic for HTML stripping & normalizing
+├── notebooks/                   # Transformation Layer
+│   └── clean_data.py            # Automated Cleaning Script
 │
-├── src/                       # Engineering Utilities
-│   ├── database.py            # Schema Initialization
-│   └── migrate.py             # CSV-to-SQL Migration Script
+├── src/                         # Engineering Core
+│   ├── vector_engine.py         # AI Model Logic
+│   └── migrate.py               # Database Migration Script
 │
-└── requirements.txt           # Dependencies
+└── frontend/                    # Presentation Layer
+    └── ui.py                    # Streamlit Interface (The App)
 ```
 
 ---
 
 ## ⚙️ Installation & Setup
 
-### 1. Clone the Repository
+### Prerequisites
+- Python 3.9+
+- Git
+
+### 1. Clone & Install
 ```bash
 git clone https://github.com/aarsh-adhvaryu/FacultyFinder.git
 cd FacultyFinder
-```
-
-### 2. Create Virtual Environment
-```bash
 python -m venv .venv
 
-# Windows
-.venv\Scripts\activate
+# Activate:
+# Windows -> .venv\Scripts\activate
+# Mac/Linux -> source .venv/bin/activate
 
-# Mac/Linux
-source .venv/bin/activate
-```
-
-### 3. Install Dependencies
-```bash
 pip install -r requirements.txt
 ```
 
----
+### 2. Run the Pipeline (The "One-Click" Workflow)
 
-## 🏃 Execution Guide (The Pipeline)
+We have optimized the pipeline to run sequentially.
 
-### Step 1: Ingestion
-
-Run the Spider to crawl the live website.
+#### **Step A: Ingestion (Scrape Data)**
 ```bash
 cd daiict_scraper
-scrapy crawl faculty_spider -o ../data/raw/faculty_data.csv
+scrapy crawl faculty_spider
 cd ..
 ```
+**Output**: `data/raw/faculty_data.csv` (Now includes Images! 📸)
 
-### Step 2: Transformation
+#### **Step B: Transformation (Clean Data)**
+```bash
+python notebooks/clean_data.py
+```
+**Output**: `data/processed/cleaned_faculty_data.csv`
 
-Clean the data using the notebook logic.
-
-1. Open Jupyter: `jupyter notebook`
-2. Run `notebooks/Data_cleaning.ipynb`
-3. Output: `data/processed/cleaned_faculty_data.csv`
-
-### Step 3: Storage (Migration)
-
-Initialize the DB and load the clean data.
+#### **Step C: Migration (Load DB)**
 ```bash
 python src/migrate.py
 ```
+**Output**: `data/faculty.db`
 
-### Step 4: Serving (API)
-
-Launch the API server.
+#### **Step D: Launch App 🚀**
 ```bash
-uvicorn api.main:app --reload --port 8001
+streamlit run frontend/ui.py
 ```
 
 ---
 
-## 📡 API Usage
+## 🔮 Extension to Project 2: The AI Upgrade
 
-Once running, the API provides interactive documentation at:
+FacultyFinder was designed from the ground up to support **Project 2: Semantic Intelligence**.
 
-👉 **http://127.0.0.1:8001/docs**
+### The Transition
 
-### Example Request (Search)
-```http
-"GET /faculty/search?name=Arpit HTTP/1.1"
-```
+While **Project 1** focused on **Data Engineering** (getting the data out), **Project 2** focuses on **Data Science & AI** (getting insights from the data).
 
-### Example Response
-```json
-[
-  {
-  "id": 98,
-  "name": "Arpit Rana",
-  "university": "DA-IICT",
-  "designation": "Regular Faculty",
-  "email": "arpit_rana@dau.ac.in",
-  "contact_number": "079-68261687",
-  "address": "#3105, FB-3, DA-IICT, Gandhinagar, Gujarat, India – 382007",
-  "hyperlink": "https://www.linkedin.com/in/arpitrana/",
-  "profile_url": "https://www.daiict.ac.in/faculty/arpit-rana",
-  "education": "PhD (Computer Science), University College Cork, Ireland",
-  "teaching": "Introduction to Data Mining (Technical Elective - B.Tech.\nIII/ IV Year) Recommendation Systems (Technical Elective - PG Level Course) Data Structures (B.Tech.\nI Year) Object-Oriented Programming (M.Sc.\n(IT) I Year)",
-  "biography": "Dr.\nArpit Rana did his Ph.D.\nfrom University College Cork, Ireland, in 2020.\nBefore joining DA-IICT, He worked as a Postdoctoral Researcher at the Department of Industrial Engineering, University of Toronto (U of T), Canada.",
-  "publications": "Conference Papers Arpit Rana and Derek Bridge.\n2017.\nExplanation Chains: Recommendation by Explanation.\n11th ACM Conference on Recommender Systems Poster Proceedings (RECSYS’17), Como, Italy.\nArpit Rana and Derek Bridge.\n2018.\nExplanations that are Intrinsic to Recommendations.\n26th ACM Conference on User Modeling, Adaptation and Personalization (UMAP’18), Singapore, Singapore.\nArpit Rana and Derek Bridge.\n2020.\nNavigation-By-Preference: A New Conversational Recommender with Preference-Based Feedback.\n25th ACM Conference on Intelligent User Interface (IUI’20), Cagliari, Italy Shengnan Lyu, Arpit Rana, Scott Sanner, and Mohamed Reda Baudjenek.\n2021.\nA Workflow Analysis of Context-Driven Conversational Recommendation, 30th International Conference on the World Wide Web (WWW’21), Ljubljana.\nJournal Articles Arpit Rana, Rafael Martins D'addio, Marcelo Manzato, and Derek Bridge.\n2022.\nExtended Recommendation-By-Explanation.\nUser Modeling and User-Adapted Interaction, Springer.\nArpit Rana, Scott Sanner, Mohamed Reda Baudjenek, Ron Dicarlantonio, and Gary Farmaner.\n2023.\nUser Experience and the Role of Personalization in Critiquing-Based Conversational Recommendation.\nThe ACM Transactions on the Web (TWeb).",
-  "research": null,
-  "research_interests": [
-    "Applied Machine Learning",
-    "Recommendation Systems",
-    "Multimodality",
-    "and their applications in Digital Innovation and Transformation"
-  ]
-}
-]
-```
+#### The Problem with Project 1 (SQL)
+- User searches "Vision" → Database finds exact word "Vision".
+- **Limitation**: It misses "Image Processing" or "Object Detection" because the words are different, even if the meaning is the same.
 
-### Available Endpoints
+#### The Solution in Project 2 (Vectors)
+We integrated **Sentence Transformers** (`all-MiniLM-L6-v2`) to create a **Vector Space Model**.
 
-| Method | Endpoint | Description | Example |
-|--------|----------|-------------|---------|
-| `GET` | `/faculty/all` | Retrieve all faculty profiles | N/A |
-| `GET` | `/faculty/search` | Search faculty by name | `?name=Gupta` |
-| `GET` | `/faculty/{id}` | Get specific faculty by ID | `/faculty/42` |
+**Capabilities**:
+- **Semantic Retrieval**: The system understands that "Cybersecurity" and "Network Safety" are related concepts.
+- **The 'R' in RAG**: This architecture provides the **Context Retrieval** layer. It is now technically capable of feeding relevant profiles to an LLM (like GPT-4) for question answering, laying the groundwork for a full **Chatbot** application.
 
----
-
-## 🔮 Future Scope
-
-### 1. Vector Embeddings
-Convert "Biography" and "Research" text into vector embeddings for semantic search (e.g., searching "Who works on AI?" finds professors who mention "Deep Learning").
-
-### 2. Automated Scheduling
-Use GitHub Actions or Airflow to run the scraper weekly to keep data fresh.
-
-### 3. Frontend Dashboard
-Build a React/Streamlit dashboard to visualize faculty distribution by research area.
+#### Dynamic Filtering (Magic Commands)
+Added **"Magic Commands"** to the UI. For example, typing `top5` in the search bar uses Regex to trigger a strict filtering mode, showing only the 5 highest-confidence matches.
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
----
+1. Fork the repository.
+2. Create your feature branch (`git checkout -b feature/NewFeature`).
+3. Commit your changes (`git commit -m 'Add NewFeature'`).
+4. Push to the branch (`git push origin feature/NewFeature`).
+5. Open a Pull Request.
 
 ---
 
 ## 👤 Author
 
-**Aarsh Adhvaryu**
-
-- GitHub: [@aarsh-adhvaryu](https://github.com/aarsh-adhvaryu)
-- LinkedIn: [Connect with me](https://www.linkedin.com/in/aarsh-adhvaryu-08918234b)
-
----
-
+**Aarsh Adhvaryu**  
+Data Engineer & AI Researcher  
+[GitHub](https://github.com/aarsh-adhvaryu) | [LinkedIn](https://linkedin.com/in/aarsh-adhvaryu)
 
 ---
 
+## 📄 License
 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 📈 Project Stats
-Before migrating data to the production database, we performed a comprehensive audit in the `Transformation Layer`.
+---
 
-### 1. Dataset Overview
-* **Total Profiles Scraped:** 111 Faculty Members
-* **Source Coverage:** Regular Faculty, Adjuncts, and Distinguished Professors.
+## 🙏 Acknowledgments
 
-### 2. Data Completeness Audit
-We visualized the dataset using a **Nullity Heatmap** to identify missing information patterns.
+- **Scrapy** for the robust web scraping framework
+- **Sentence Transformers** for semantic embeddings
+- **Streamlit** for rapid prototyping and deployment
+- **DA-IICT** for the data source
 
-* **High Availability:** `Name`, `Email`, and `Profile_URL` are present in **99%** of records.
-* **The "Visiting Faculty" Gap:** Fields like `Research` (87% missing) and `Biography` (37% missing) showed significant gaps.
-    * *Insight:* This confirmed the necessity of our **"Scenario B" Scrapy logic**. Since many visiting faculty do not have full bio pages, our fallback scraper successfully captured their `Specializations` from the summary card, ensuring we didn't lose critical data.
+---
 
-### 3. Research Landscape (Normalization Results)
-By splitting the comma-separated `Specializations` string, we transformed unstructured text into structured insights.
-* **Raw Input:** "AI, Machine Learning, Deep Learning"
-* **Normalized Output:** 3 distinct rows in the `research_tags` table.
-* **Impact:** This enables queries like *"Show me the Top 5 Research Areas at DA-IICT"* (e.g., VLSI, Signal Processing, Machine Learning) which were impossible with the raw string format.
-
-
- ![GitHub stars](https://img.shields.io/github/stars/aarsh-adhvaryu/FacultyFinder?style=social)
-![GitHub forks](https://img.shields.io/github/forks/aarsh-adhvaryu/FacultyFinder?style=social)
-![GitHub issues](https://img.shields.io/github/issues/aarsh-adhvaryu/FacultyFinder)
+**⭐ If you found this project helpful, please consider giving it a star!**
