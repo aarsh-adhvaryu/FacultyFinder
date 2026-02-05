@@ -2,9 +2,9 @@ import streamlit as st
 import sqlite3
 import os
 import sys
+import re  # Added for detecting "top 5"
 
 # --- PATH SETUP (Crucial for Cloud) ---
-# This tells Streamlit where to find your 'src' folder
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
@@ -34,13 +34,11 @@ st.markdown(
 
 
 # --- 🧠 THE BRAIN (Cached) ---
-# This replaces the API. It runs inside Streamlit now.
 @st.cache_resource
 def load_engine():
     if not os.path.exists(DB_PATH):
         return None
 
-    # 1. Load Data from DB
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     rows = conn.execute("SELECT * FROM faculty").fetchall()
@@ -48,7 +46,6 @@ def load_engine():
 
     data = [dict(row) for row in rows]
 
-    # 2. Map Columns (Same logic as your API)
     formatted_data = []
     for item in data:
         formatted_data.append(
@@ -60,19 +57,17 @@ def load_engine():
                 "education": item.get("Education"),
                 "email": item.get("Email_ID"),
                 "profile_url": item.get("Profile_URL"),
-                "image_url": item.get("Photo_URL"),  # <--- CRITICAL
+                "image_url": item.get("Photo_URL"),
                 "publications": item.get("Publications"),
                 "teaching": item.get("Teaching"),
             }
         )
 
-    # 3. Initialize AI
     engine = FacultyVectorEngine()
     engine.fit(formatted_data)
     return engine
 
 
-# Load the engine immediately
 engine = load_engine()
 
 # --- UI LOGIC ---
@@ -86,15 +81,30 @@ if not engine:
     st.stop()
 
 with st.container():
-    query = st.text_area("Describe your research interests:", height=100)
+    query = st.text_area(
+        "Describe your research interests:",
+        placeholder="Type 'top5' to see only the best matches! (Default shows 15)",
+        height=100,
+    )
 
     if st.button("🔍 Find Faculty", type="primary"):
         if not query.strip():
             st.warning("Please enter some text first!")
         else:
             with st.spinner("Analyzing profiles..."):
-                # Direct Search (No API Call)
-                results = engine.search(query, top_k=150)
+
+                # --- 🪄 MAGIC COMMAND LOGIC ---
+                # Default limit
+                search_limit = 15
+
+                # Check if user typed "top5" or "top 5" (case insensitive)
+                if re.search(r"\btop\s*5\b", query, re.IGNORECASE):
+                    search_limit = 5
+                    st.toast("⚡ 'Top 5' Mode Activated!")
+                # -----------------------------
+
+                # Search with the dynamic limit
+                results = engine.search(query, top_k=search_limit)
 
                 if not results:
                     st.info("No matches found.")
@@ -137,7 +147,6 @@ with st.container():
 
                                 with st.expander("📖 View Details"):
                                     st.markdown("#### Research Focus")
-                                    # Fallback logic
                                     bio = prof.get("biography")
                                     if bio and len(bio) > 20:
                                         st.write(bio)
