@@ -2,9 +2,9 @@ import streamlit as st
 import sqlite3
 import os
 import sys
-import re  # Added for detecting "top 5"
+import re
 
-# --- PATH SETUP (Crucial for Cloud) ---
+# --- PATH SETUP ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
@@ -19,6 +19,27 @@ except ImportError:
 DB_PATH = os.path.join(parent_dir, "data", "faculty.db")
 
 st.set_page_config(page_title="FacultyFinder AI", page_icon="🎓", layout="wide")
+
+
+# --- HELPER: Format Publications (Restored!) ---
+def format_publications(text):
+    if not text or text == "Not listed":
+        return "No publications available."
+
+    # 1. BOLD the headers
+    text = text.replace("Conference Papers", "\n\n**Conference Papers**\n")
+    text = text.replace("Journal Articles", "\n\n**Journal Articles**\n")
+    text = text.replace("Books/Book Chapters", "\n\n**Books & Chapters**\n")
+
+    # 2. Add Bullet points for readability
+    text = re.sub(r"(\d{4}\.)", r"\1\n\n* ", text)
+
+    # 3. Cleanup messy starts
+    if not text.strip().startswith("*") and not text.strip().startswith("**"):
+        text = "* " + text
+
+    return text
+
 
 # Custom CSS
 st.markdown(
@@ -58,7 +79,7 @@ def load_engine():
                 "email": item.get("Email_ID"),
                 "profile_url": item.get("Profile_URL"),
                 "image_url": item.get("Photo_URL"),
-                "publications": item.get("Publications"),
+                "publications": item.get("Publications"),  # <--- Loaded here
                 "teaching": item.get("Teaching"),
             }
         )
@@ -93,17 +114,13 @@ with st.container():
         else:
             with st.spinner("Analyzing profiles..."):
 
-                # --- 🪄 MAGIC COMMAND LOGIC ---
-                # Default limit
+                # --- MAGIC COMMAND LOGIC ---
                 search_limit = 15
-
-                # Check if user typed "top5" or "top 5" (case insensitive)
                 if re.search(r"\btop\s*5\b", query, re.IGNORECASE):
                     search_limit = 5
                     st.toast("⚡ 'Top 5' Mode Activated!")
-                # -----------------------------
+                # ---------------------------
 
-                # Search with the dynamic limit
                 results = engine.search(query, top_k=search_limit)
 
                 if not results:
@@ -152,3 +169,12 @@ with st.container():
                                         st.write(bio)
                                     else:
                                         st.write(tags)
+
+                                    # --- RESTORED PUBLICATIONS SECTION ---
+                                    st.markdown("#### Selected Publications")
+                                    raw_pubs = prof.get("publications", "")
+                                    # Use the helper function we defined at the top
+                                    clean_pubs = format_publications(raw_pubs)
+                                    st.markdown(clean_pubs)
+                                    # -------------------------------------
+    
