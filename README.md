@@ -10,7 +10,7 @@
 
 Don't want to install the code? Access the live deployed application here:
 
-👉 **[Click to Open FacultyFinder](https://your-app-url.streamlit.app)**
+👉 **[Click to Open FacultyFinder](https://daiictfacultyfinder.streamlit.app/)**
 
 ---
 
