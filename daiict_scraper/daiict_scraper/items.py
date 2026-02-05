@@ -2,22 +2,19 @@ import scrapy
 
 
 class FacultyItem(scrapy.Item):
-    # Core Metadata
-    Name = scrapy.Field()
+    # Standard Fields
     University = scrapy.Field()
-    Type = scrapy.Field()  
-    Profile_URL = scrapy.Field()
-
-    # Contact Info
-    Email_ID = scrapy.Field()
-    Contact_Number = scrapy.Field()
-    Address = scrapy.Field()
-    Hyperlink = scrapy.Field()  
-
-    # Content Fields
+    Type = scrapy.Field()
+    Name = scrapy.Field()
     Education = scrapy.Field()
-    Specializations = scrapy.Field()
+    Contact_Number = scrapy.Field()
+    Email_ID = scrapy.Field()
+    Address = scrapy.Field()
+    Hyperlink = scrapy.Field()
+    Profile_URL = scrapy.Field()
+    Photo_URL = scrapy.Field()
     Biography = scrapy.Field()
-    Publications = scrapy.Field()
     Teaching = scrapy.Field()
     Research = scrapy.Field()
+    Publications = scrapy.Field()
+    Specializations = scrapy.Field()

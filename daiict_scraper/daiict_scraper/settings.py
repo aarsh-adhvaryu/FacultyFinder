@@ -59,7 +59,7 @@ DOWNLOAD_DELAY = 2
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   "daiict_scraper.pipelines.DaiictScraperPipeline": 300,
+    "daiict_scraper.pipelines.DaiictScraperPipeline": 300,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
@@ -95,9 +95,30 @@ FEED_EXPORT_FIELDS = [
     "Address",
     "Hyperlink",
     "Profile_URL",
+    "Photo_URL",  # <-- ADD THIS LINE
     "Specializations",
     "Publications",
     "Teaching",
     "Research",
     "Biography",
 ]
+# --- ADD THIS TO THE BOTTOM OF settings.py ---
+import os
+
+# 1. Calculate the absolute path to 'data/raw/faculty_data.csv'
+# This ensures it works regardless of where you run the command from
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DATA_PATH = os.path.join(BASE_DIR, "data", "raw", "faculty_data.csv")
+
+# 2. Configure the Output
+FEEDS = {
+    DATA_PATH: {
+        "format": "csv",
+        "encoding": "utf8",
+        "overwrite": True,  # <--- THIS IS THE KEY FIX. It forces a fresh file every time.
+    }
+}
+
+# 3. Disable Caching (To ensure we don't get old pages without images)
+HTTPCACHE_ENABLED = False
+ROBOTSTXT_OBEY = False

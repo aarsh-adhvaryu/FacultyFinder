@@ -7,7 +7,9 @@ class DaiictSpider(scrapy.Spider):
     name = "faculty_spider"
     allowed_domains = ["daiict.ac.in"]
 
-    # Mapping URLs to Faculty Types
+    # FORCE DISABLE CACHE IN CODE
+    custom_settings = {"HTTPCACHE_ENABLED": False, "ROBOTSTXT_OBEY": False}
+
     start_urls_map = {
         "https://www.daiict.ac.in/faculty": "Regular Faculty",
         "https://www.daiict.ac.in/adjunct-faculty": "Adjunct Faculty",
@@ -22,24 +24,41 @@ class DaiictSpider(scrapy.Spider):
 
     def parse_list(self, response):
         faculty_type = response.meta["type"]
-
-        # Selector for the faculty card
         faculty_cards = response.css("div.facultyDetails")
-        self.logger.info(f"Found {len(faculty_cards)} profiles for {faculty_type}")
+
+        # DEBUG PRINT
+        print(f"🔍 Found {len(faculty_cards)} cards on {response.url}")
 
         for card in faculty_cards:
             profile_link = card.css("h3 a::attr(href)").get()
             list_view_spec = self.clean_html(card.css(".areaSpecialization").get())
 
+            # 1. Try extracting image from the card (List View)
+            img_src = card.css(".facultyPhoto img::attr(src)").get()
+
+            # DEBUG PRINT
+            if img_src:
+                print(f"   📸 Found List Image: {img_src}")
+
+            list_photo_url = response.urljoin(img_src) if img_src else None
+
             if profile_link:
                 yield response.follow(
                     profile_link,
                     callback=self.parse_profile,
-                    meta={"type": faculty_type, "fallback_spec": list_view_spec},
+                    meta={
+                        "type": faculty_type,
+                        "fallback_spec": list_view_spec,
+                        "list_photo_url": list_photo_url,
+                    },
                 )
             else:
                 yield self.parse_card_only(
-                    card, faculty_type, response.url, list_view_spec
+                    card,
+                    faculty_type,
+                    response.url,
+                    list_view_spec,
+                    list_photo_url or "N/A",
                 )
 
     def parse_profile(self, response):
@@ -48,7 +67,29 @@ class DaiictSpider(scrapy.Spider):
         item["Type"] = response.meta["type"]
         item["Profile_URL"] = response.url
 
-        # Basic Info
+        # 2. Try extracting image from Profile Page (High Res)
+        # Using the exact class from your HTML snippet
+        profile_img_src = response.css(
+            ".field--name-field-faculty-image img::attr(src)"
+        ).get()
+
+        final_photo = "N/A"
+
+        if profile_img_src:
+            final_photo = response.urljoin(profile_img_src)
+            print(f"   ✅ FOUND PROFILE PHOTO: {final_photo}")
+        else:
+            # Fallback to list photo
+            fallback = response.meta.get("list_photo_url")
+            if fallback:
+                final_photo = fallback
+                print(f"   ⚠️ Using Fallback Photo: {final_photo}")
+            else:
+                print(f"   ❌ NO PHOTO FOUND for {response.url}")
+
+        item["Photo_URL"] = final_photo
+
+        # Standard Fields
         item["Name"] = self.get_text(response, ".field--name-field-faculty-names::text")
         item["Education"] = self.get_text(
             response, ".field--name-field-faculty-name::text"
@@ -58,7 +99,6 @@ class DaiictSpider(scrapy.Spider):
         )
         item["Address"] = self.get_text(response, ".field--name-field-address::text")
 
-        # Email & Web
         email = response.css(".field--name-field-email .field__item::text").get()
         item["Email_ID"] = email.strip() if email else "N/A"
 
@@ -67,7 +107,6 @@ class DaiictSpider(scrapy.Spider):
             web_link = response.css(".social-media-sharing a::attr(href)").get()
         item["Hyperlink"] = web_link if web_link else "N/A"
 
-        # Content
         item["Biography"] = self.clean_html(
             response.css(".field--name-field-biography").get()
         )
@@ -78,7 +117,6 @@ class DaiictSpider(scrapy.Spider):
             response.css(".education.overflowContent").get()
         )
 
-        # Research/Specialization Logic
         spec_xpath = "//h2[contains(text(), 'Specialization')]/parent::div/following-sibling::div[contains(@class, 'work-exp')]"
         detail_spec = self.clean_html(response.xpath(spec_xpath).get())
 
@@ -92,13 +130,15 @@ class DaiictSpider(scrapy.Spider):
 
         yield item
 
-    def parse_card_only(self, card, f_type, url, spec):
+    def parse_card_only(self, card, f_type, url, spec, photo_url):
         item = FacultyItem()
         item["University"] = "DA-IICT"
         item["Type"] = f_type
         item["Profile_URL"] = url
+        item["Photo_URL"] = photo_url
         item["Name"] = card.css("h3 a::text").get(default="N/A").strip()
         item["Specializations"] = spec
+
         for field in [
             "Education",
             "Contact_Number",
